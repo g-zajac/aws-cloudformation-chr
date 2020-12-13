@@ -1,3 +1,130 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: This Template deploys a VPC with public subnet, spin in this subnet Mikrotik CHR instance
-add adds security group. The Mikrotik CHR is created from predefined image with all neccecery settings and scripts
+Description: This Template deploys a VPC with public subnet, spin in this subnet Mikrotik CHR instance add adds security group. The Mikrotik CHR is created from predefined image with all neccecery settings and scripts
+
+Parameters:
+  ProjectName:
+    Description: Name of the project
+    Type: String
+    Default: CHR
+
+  EnvironmentName:
+    Description: Select the environment
+    Type: String
+    Default: "dev"
+
+  MyIp:
+    Description: Local IP from whatismy in cidr format. Dev acces will be limited only to own ip
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: MyIp
+
+  ProjectTag:
+    Description: Tag Project value
+    Type: String
+    Default: "chr lab"
+
+  MyVPCCIDR:
+    Description: Please enter the IP range (CIDR notation) for the VPC
+    Type: String
+    Default: 10.0.0.0/16
+
+  PublicSubnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.10.0/24
+
+
+Resources:
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref MyVPCCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: !Ref ProjectName
+
+  myInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Ref ProjectName
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref myInternetGateway
+      VpcId: !Ref MyVPC
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Ref PublicSubnet1CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName} Public Subnet (AZ1)
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: !Ref ProjectName
+
+  PubicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref myInternetGateway
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+
+  ChrSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow WinBox 8291 to client host
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref MyIp
+        Description: SSH
+      - IpProtocol: tcp
+        FromPort: 8291
+        ToPort: 8291
+        CidrIp: !Ref MyIp
+        Description: WinBox
+      SecurityGroupEgress:
+      - IpProtocol: -1
+        CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Ref ProjectName
+
+  ChrInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      # cutstom image with preset and scripts
+      ImageId: ami-01d4c5669dc3846d2
+      # AvailabilityZone: eu-central-1c
+      InstanceType: t3.nano
+      KeyName: chr
+      SubnetId: !Ref PublicSubnet1
+      SecurityGroupIds:
+        - !Ref ChrSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Ref ProjectName
