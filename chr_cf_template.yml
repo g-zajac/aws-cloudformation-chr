@@ -11,6 +11,10 @@ Parameters:
     Description: Select the environment
     Type: String
     Default: "dev"
+    AllowedValues:
+      - dev
+      - prod
+    ConstraintDescription: must be dev or prod
 
   MyIp:
     Description: Local IP from whatismy in cidr format. Dev acces will be limited only to own ip
