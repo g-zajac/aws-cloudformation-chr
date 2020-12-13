@@ -36,6 +36,8 @@ Parameters:
     Type: String
     Default: 10.0.10.0/24
 
+Conditions:
+  CreateEIPforProd: !Equals [!Ref EnvironmentName, prod]
 
 Resources:
   MyVPC:
@@ -132,3 +134,9 @@ Resources:
       Tags:
         - Key: Name
           Value: !Ref ProjectName
+
+  MyProdEIP:
+    Type: AWS::EC2::EIP
+    Condition: CreateEIPforProd
+    Properties:
+      InstanceId: !Ref ChrInstance
