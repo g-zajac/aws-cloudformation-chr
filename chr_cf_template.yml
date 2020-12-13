@@ -1,0 +1,3 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This Template deploys a VPC with public subnet, spin in this subnet Mikrotik CHR instance
+add adds security group. The Mikrotik CHR is created from predefined image with all neccecery settings and scripts
