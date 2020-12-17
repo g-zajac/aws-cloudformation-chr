@@ -26,7 +26,7 @@ Parameters:
     Type: String
     Default: "chr lab"
 
-  MyVPCCIDR:
+  MyVpcCIDR:
     Description: Please enter the IP range (CIDR notation) for the VPC
     Type: String
     Default: 10.0.0.0/16
@@ -43,7 +43,7 @@ Resources:
   MyVPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: !Ref MyVPCCIDR
+      CidrBlock: !Ref MyVpcCIDR
       EnableDnsSupport: true
       EnableDnsHostnames: true
       InstanceTenancy: default
@@ -53,6 +53,7 @@ Resources:
 
   myInternetGateway:
     Type: AWS::EC2::InternetGateway
+    DependsOn: MyVPC
     Properties:
       Tags:
         - Key: Name
@@ -120,11 +121,26 @@ Resources:
         - Key: Name
           Value: !Ref ProjectName
 
+  # ChrInstance:
+  #   Type: AWS::EC2::Instance
+  #   Properties:
+  #     # cutstom image with preset and scripts
+  #     ImageId: ami-01d4c5669dc3846d2
+  #     # AvailabilityZone: eu-central-1c
+  #     InstanceType: t3.nano
+  #     KeyName: chr
+  #     SubnetId: !Ref PublicSubnet1
+  #     SecurityGroupIds:
+  #       - !Ref ChrSecurityGroup
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Ref ProjectName
+
   ChrInstance:
     Type: AWS::EC2::Instance
     Properties:
       # cutstom image with preset and scripts
-      ImageId: ami-01d4c5669dc3846d2
+      ImageId: ami-0bd39c806c2335b95
       # AvailabilityZone: eu-central-1c
       InstanceType: t3.nano
       KeyName: chr
@@ -140,3 +156,6 @@ Resources:
     Condition: CreateEIPforProd
     Properties:
       InstanceId: !Ref ChrInstance
+      Tags:
+        - Key: Name
+          Value: !Ref ProjectName
