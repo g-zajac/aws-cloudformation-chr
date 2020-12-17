@@ -21,6 +21,16 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     Default: MyIp
 
+  # TODO replace with validation
+  # SSHLocation:
+  #   Description: ' The IP address range that can be used to access the web server using SSH.'
+  #   Type: String
+  #   MinLength: '9'
+  #   MaxLength: '18'
+  #   Default: 0.0.0.0/0
+  #   AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+  #   ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+
   ProjectTag:
     Description: Tag Project value
     Type: String
@@ -35,6 +45,14 @@ Parameters:
     Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
     Type: String
     Default: 10.0.10.0/24
+
+  # EC2Image:
+  #   Description: "This parameter retrieves the most recent Amazon Linux AMI, leave this value as is"
+  #           Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
+  #           Default": "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2",
+  #           AllowedValues: [
+  #               "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
+  #           ]
 
 Conditions:
   CreateEIPforProd: !Equals [!Ref EnvironmentName, prod]
@@ -142,6 +160,7 @@ Resources:
       # cutstom image with preset and scripts
       ImageId: ami-0bd39c806c2335b95
       # AvailabilityZone: eu-central-1c
+      # SubnetId: eu-central-1c
       InstanceType: t3.nano
       KeyName: chr
       SubnetId: !Ref PublicSubnet1
